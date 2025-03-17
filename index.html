@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apresentação de Exercícios - PyScript</title>
+
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        textarea {
+            width: 80%;
+            height: 150px;
+            font-size: 16px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            font-size: 16px;
+        }
+
+        #output {
+            margin-top: 20px;
+            background: #f4f4f4;
+            padding: 10px;
+            min-height: 50px;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Apresentação de Exercícios - Pyodide</h1>
+
+    <p>Digite seu código Python abaixo e clique em 'Executar'.</p>
+
+    <textarea id="codigoPython">
+nome = input("Qual é o seu nome? ")
+print(f"Olá, {nome}!")
+    </textarea>
+    <br>
+    <button id="executar">Executar</button>
+
+    <h3>Saída:</h3>
+    <div id="output"></div>
+
+    <script>
+        async function executarCodigo() {
+            let codigo = document.getElementById("codigoPython").value;
+            let outputDiv = document.getElementById("output");
+
+            // Inicializa o Pyodide se ainda não estiver carregado
+            if (!window.pyodide) {
+                outputDiv.innerText = "Carregando o interpretador Python...";
+                window.pyodide = await loadPyodide();
+                outputDiv.innerText = "";
+            }
+
+            try {
+                // Redireciona a saída para capturar os prints
+                window.pyodide.runPython(`
+import sys
+import io
+sys.stdout = io.StringIO()
+sys.stderr = io.StringIO()
+
+# Função para substituir input() pelo prompt() do JavaScript
+def input(prompt_text=""):
+    import js
+    return js.prompt(prompt_text)
+                `);
+
+                // Executa o código Python
+                window.pyodide.runPython(codigo);
+
+                // Obtém a saída do print()
+                let resultado = window.pyodide.runPython("sys.stdout.getvalue()");
+                outputDiv.innerText = resultado;
+            } catch (error) {
+                outputDiv.innerText = "Erro: " + error;
+            }
+        }
+
+        // Adiciona evento ao botão
+        document.getElementById("executar").addEventListener("click", executarCodigo);
+    </script>
+</body>
+
+</html>
